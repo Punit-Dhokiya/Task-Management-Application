@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .task { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .completed { background-color: #d4edda; }
+        .pending { background-color: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h2>Task Manager</h2>
+    <form id="taskForm">
+        <input id="titleInput" type="text" placeholder="Task Title" required>
+        <input id="descInput" type="text" placeholder="Description (optional)">
+        <button type="submit">Add Task</button>
+    </form>
+    <div id="taskList"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/tasks';
+
+        async function fetchTasks() {
+            try {
+                const res = await fetch(API_BASE);
+                const tasks = await res.json();
+                displayTasks(tasks);
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        }
+
+        function displayTasks(tasks) {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            tasks.forEach(task => {
+                const div = document.createElement('div');
+                div.className = `task ${task.status}`;
+                div.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.description || 'No description'}</p>
+                    <p>Status: ${task.status}</p>
+                    <p>Created: ${new Date(task.createdAt).toLocaleString()}</p>
+                    ${task.status === 'pending' ? `<button onclick="completeTask(${task.id})">Mark Complete</button>` : ''}
+                    <button onclick="deleteTask(${task.id})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('titleInput').value.trim();
+            const description = document.getElementById('descInput').value.trim();
+            if (!title) return;
+
+            try {
+                await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description })
+                });
+                document.getElementById('titleInput').value = '';
+                document.getElementById('descInput').value = '';
+                fetchTasks();
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+
+        async function completeTask(id) {
+            try {
+                await fetch(`${API_BASE}/${id}`, { method: 'PUT' });
+                fetchTasks();
+            } catch (error) {
+                console.error('Error completing task:', error);
+            }
+        }
+
+        async function deleteTask(id) {
+            try {
+                await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                fetchTasks();
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+
+        // Load tasks on page load
+        fetchTasks();
+    </script>
+</body>
+</html>
+
+            
+           
+     </script>    
+</body>
+</html>
